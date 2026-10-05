@@ -26,8 +26,8 @@ class CreatePaymentCommand:
     amount: Decimal
     currency: Currency
     description: str
-    metadata: dict[str, Any] = field(default_factory=dict)
     webhook_url: str
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def request_fingerprint(self) -> str:
         return fingerprint(
