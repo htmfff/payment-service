@@ -1,0 +1,94 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "payment-service"
+version = "1.0.0"
+description = "Asynchronous payment processing microservice with transactional outbox and webhook notifications"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi~=0.115.0",
+    "uvicorn[standard]~=0.34.0",
+    "pydantic~=2.11.0",
+    "pydantic-settings~=2.9.0",
+    "sqlalchemy[asyncio]~=2.0.41",
+    "asyncpg~=0.30.0",
+    "alembic~=1.15.0",
+    "psycopg[binary]~=3.2.0",
+    "faststream[rabbit]==0.7.7",
+    "aio-pika~=9.5.0",
+    "httpx~=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest~=8.3.0",
+    "pytest-asyncio~=0.25.0",
+    "pytest-cov~=6.1.0",
+    "ruff~=0.11.0",
+    "mypy~=1.15.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
+    "SIM",
+    "RUF",
+    "ASYNC",
+    "DTZ",
+    "S",
+    "T20",
+    "PTH",
+    "A",
+    "N",
+    "BLE",
+]
+ignore = [
+    "A002",
+    "BLE001",
+    "N818",
+    "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/*.py" = ["E501"]
+"tests/**/*.py" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+mypy_path = "app"
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: requires running PostgreSQL and RabbitMQ",
+]
+filterwarnings = ["error::DeprecationWarning:app.*"]
