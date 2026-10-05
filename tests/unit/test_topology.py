@@ -6,7 +6,9 @@ from app.messaging.topology import build_topology, retry_routing_key
 
 
 def test_settings_expose_two_delay_tiers_for_three_attempts() -> None:
-    assert Settings(processing_max_attempts=3, processing_retry_base_seconds=5).processing_retry_delays == (
+    assert Settings(
+        processing_max_attempts=3, processing_retry_base_seconds=5
+    ).processing_retry_delays == (
         5,
         15,
     )

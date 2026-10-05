@@ -13,7 +13,7 @@ from app.api.schemas import HealthResponse
 from app.config import Settings, get_settings
 from app.core import constants
 from app.db.session import Database
-from app.logging import configure_logging, get_logger
+from app.logging_config import configure_logging, get_logger
 from app.messaging.bus import RabbitEventPublisher, build_broker
 from app.messaging.topology import build_topology, ensure_topology
 from app.services.outbox import OutboxRelay

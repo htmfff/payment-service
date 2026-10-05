@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from random import Random
 
-_JITTER_SOURCE = Random()
+_JITTER_SOURCE = Random()  # noqa: S311 - spreading retries, not a security decision
 
 
 def exponential_backoff(
@@ -14,7 +14,7 @@ def exponential_backoff(
     jitter_ratio: float = 0.1,
     rng: Random | None = None,
 ) -> float:
-    """Delay before attempt number `attempt` + 1, with full-jitter style noise to avoid thundering herds."""
+    """Delay before attempt number `attempt` + 1, with jitter so retries do not stampede."""
     if attempt < 1:
         raise ValueError("attempt must be greater than or equal to 1")
     if base_seconds < 0:
@@ -45,7 +45,7 @@ def retry_tier_delays(
 
 
 def next_retry_tier(attempt: int, tier_count: int) -> int | None:
-    """Index of the delay tier to wait in after `attempt` failed, or None when attempts are exhausted.
+    """Delay tier to wait in after `attempt` failed, or None once the attempts are exhausted.
 
     With two tiers and three allowed attempts this maps 1 -> 1, 2 -> 2, 3 -> None.
     """

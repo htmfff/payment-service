@@ -42,7 +42,9 @@ class RecordingPublisher:
     async def publish_retry(self, event: PaymentCreatedEvent, *, attempt: int, reason: str) -> None:
         raise AssertionError("not used in this test")
 
-    async def publish_dead_letter(self, event: PaymentCreatedEvent, *, attempt: int, reason: str) -> None:
+    async def publish_dead_letter(
+        self, event: PaymentCreatedEvent, *, attempt: int, reason: str
+    ) -> None:
         raise AssertionError("not used in this test")
 
 
@@ -70,37 +72,36 @@ async def _pending_outbox_rows(database: Database) -> int:
 
 
 async def _seed_payment(database: Database, idempotency_key: str) -> Payment:
-    async with database.session() as session:
-        async with transaction(session):
-            payment = Payment(
-                idempotency_key=idempotency_key,
-                request_fingerprint="f" * 64,
-                amount=Decimal("10.00"),
-                currency=Currency.RUB,
-                description="Seeded payment",
-                metadata_={},
-                webhook_url=_WEBHOOK_URL,
-                status=PaymentStatus.PENDING,
-            )
-            session.add(payment)
-            await session.flush()
-            await OutboxRepository(session).append(
-                aggregate_id=payment.id,
-                event_type="payment.created",
-                routing_key="payment.created",
-                payload={
-                    "event_id": str(uuid4()),
-                    "occurred_at": "2026-01-15T12:00:00Z",
-                    "payment_id": str(payment.id),
-                    "idempotency_key": idempotency_key,
-                    "amount": "10.00",
-                    "currency": "RUB",
-                    "description": "Seeded payment",
-                    "metadata": {},
-                    "webhook_url": _WEBHOOK_URL,
-                },
-            )
-            return payment
+    async with database.session() as session, transaction(session):
+        payment = Payment(
+            idempotency_key=idempotency_key,
+            request_fingerprint="f" * 64,
+            amount=Decimal("10.00"),
+            currency=Currency.RUB,
+            description="Seeded payment",
+            metadata_={},
+            webhook_url=_WEBHOOK_URL,
+            status=PaymentStatus.PENDING,
+        )
+        session.add(payment)
+        await session.flush()
+        await OutboxRepository(session).append(
+            aggregate_id=payment.id,
+            event_type="payment.created",
+            routing_key="payment.created",
+            payload={
+                "event_id": str(uuid4()),
+                "occurred_at": "2026-01-15T12:00:00Z",
+                "payment_id": str(payment.id),
+                "idempotency_key": idempotency_key,
+                "amount": "10.00",
+                "currency": "RUB",
+                "description": "Seeded payment",
+                "metadata": {},
+                "webhook_url": _WEBHOOK_URL,
+            },
+        )
+        return payment
 
 
 async def test_create_payment_is_accepted_and_writes_one_outbox_event(

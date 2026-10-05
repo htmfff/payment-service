@@ -14,7 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from app.config import get_settings
-from app.logging import configure_logging, get_logger
+from app.logging_config import configure_logging, get_logger
 
 logger = get_logger("webhook-demo")
 _SIGNATURE_HEADER = "X-Signature"
@@ -83,7 +83,10 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Demo webhook receiver")
-    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",  # noqa: S104 - demo receiver, reachable from the compose network
+    )
     parser.add_argument("--port", type=int, default=8080)
     arguments = parser.parse_args()
 

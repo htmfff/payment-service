@@ -22,10 +22,13 @@ def _normalize(value: Any) -> Any:
     if isinstance(value, Enum):
         return _normalize(value.value)
     if isinstance(value, dict):
-        return {str(key): _normalize(item) for key, item in sorted(value.items(), key=lambda kv: str(kv[0]))}
-    if isinstance(value, (list, tuple)):
+        return {
+            str(key): _normalize(item)
+            for key, item in sorted(value.items(), key=lambda kv: str(kv[0]))
+        }
+    if isinstance(value, list | tuple):
         return [_normalize(item) for item in value]
-    if isinstance(value, (datetime, date)):
+    if isinstance(value, datetime | date):
         return value.isoformat()
     if isinstance(value, UUID):
         return str(value)
@@ -44,7 +47,7 @@ def canonical_json(value: Any) -> str:
 
 
 def fingerprint(value: Any) -> str:
-    """Stable digest of a request payload, used to detect Idempotency-Key reuse with a different body."""
+    """Stable digest of a request payload, used to detect Idempotency-Key reuse with a new body."""
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
 
 

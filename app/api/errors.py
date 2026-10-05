@@ -15,7 +15,7 @@ from app.core.exceptions import (
     MissingIdempotencyKeyError,
     PaymentNotFoundError,
 )
-from app.logging import get_logger
+from app.logging_config import get_logger
 
 logger = get_logger(__name__)
 

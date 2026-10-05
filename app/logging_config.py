@@ -6,9 +6,11 @@ import sys
 from datetime import UTC, datetime
 from typing import Any
 
-_STANDARD_RECORD_ATTRIBUTES = frozenset(
-    logging.LogRecord("", 0, "", 0, "", (), None).__dict__
-) | {"message", "asctime", "taskName"}
+_STANDARD_RECORD_ATTRIBUTES = frozenset(logging.LogRecord("", 0, "", 0, "", (), None).__dict__) | {
+    "message",
+    "asctime",
+    "taskName",
+}
 
 _NOISY_LOGGERS = ("uvicorn.access", "aio_pika", "aiormq", "asyncio")
 

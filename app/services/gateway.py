@@ -56,7 +56,7 @@ class EmulatedPaymentGateway:
         self._success_rate = success_rate
         self._unavailable_rate = unavailable_rate
         self._sleep = sleep
-        self._rng = rng or random.Random()
+        self._rng = rng or random.Random()  # noqa: S311 - latency jitter, not a security decision
 
     async def charge(
         self,

@@ -8,7 +8,7 @@ from aio_pika.abc import AbstractChannel
 from faststream.rabbit import RabbitExchange, RabbitQueue
 
 from app.core import constants
-from app.logging import get_logger
+from app.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -37,7 +37,7 @@ def retry_routing_key(tier: int) -> str:
 
 
 def build_topology(retry_delays: Sequence[int]) -> Topology:
-    """Retry queues hold a message for their tier delay and then dead-letter it back to the work queue."""
+    """Retry queues hold a message for their tier delay, then dead-letter it to the work queue."""
     payments_exchange = RabbitExchange(
         constants.PAYMENTS_EXCHANGE,
         type=ExchangeType.DIRECT,

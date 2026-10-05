@@ -9,7 +9,7 @@ from app.core.enums import Environment
 from app.core.retries import retry_tier_delays
 
 INSECURE_DEFAULT_API_KEY = "local-dev-api-key"
-INSECURE_DEFAULT_WEBHOOK_SECRET = "local-dev-webhook-secret"
+INSECURE_DEFAULT_WEBHOOK_SECRET = "local-dev-webhook-secret"  # noqa: S105 - refused in production
 
 
 class Settings(BaseSettings):

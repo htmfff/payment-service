@@ -63,7 +63,7 @@ async def integration_database(test_database_url: str) -> AsyncIterator[Database
     try:
         async with database.engine.begin() as connection:
             await connection.execute(text("TRUNCATE outbox_events, payments CASCADE"))
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         pytest.skip(f"test database is unreachable: {error}")
 
     yield database

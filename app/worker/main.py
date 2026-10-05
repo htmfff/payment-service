@@ -14,7 +14,7 @@ from app.config import Settings, get_settings
 from app.core import constants
 from app.core.retries import next_retry_tier
 from app.db.session import Database
-from app.logging import configure_logging, get_logger
+from app.logging_config import configure_logging, get_logger
 from app.messaging.bus import EventPublisher, RabbitEventPublisher, build_broker
 from app.messaging.events import PaymentCreatedEvent
 from app.messaging.topology import Topology, build_topology, ensure_topology
@@ -25,8 +25,10 @@ from app.worker.handlers import PaymentProcessor, read_attempt
 logger = get_logger(__name__)
 
 
-def build_processor(settings: Settings, database: Database) -> tuple[PaymentProcessor, httpx.AsyncClient]:
-    """Build the processor and the HTTP client it needs, returned together so the caller can close it."""
+def build_processor(
+    settings: Settings, database: Database
+) -> tuple[PaymentProcessor, httpx.AsyncClient]:
+    """Build the processor together with the HTTP client, so the caller can close the client."""
     http_client = build_webhook_client()
     webhooks = WebhookDispatcher(
         http_client,
@@ -83,7 +85,9 @@ def build_worker(settings: Settings) -> FastStream:
             await processor.process(event)
         except Exception as exc:
             if not await _route_failure(publisher, topology, event, attempt, exc):
-                await message.nack(requeue=True)
+                # The broker refused the retry, so requeueing would spin this message in a tight
+                # loop. The queue dead-letters anything nacked without requeue instead.
+                await message.nack(requeue=False)
                 return
         await message.ack()
 
@@ -99,8 +103,8 @@ async def _route_failure(
 ) -> bool:
     """Republish a failed message into the next delay tier, or into the DLQ once attempts run out.
 
-    Returns False when the message could not be routed, so the caller can leave the original
-    unacknowledged and let RabbitMQ redeliver it.
+    Returns False when the message could not be routed, so the caller can dead-letter the
+    original message rather than leave it unacknowledged.
     """
     reason = f"{type(error).__name__}: {error}"
     tier = next_retry_tier(attempt, topology.retry_tier_count)

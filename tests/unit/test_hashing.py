@@ -16,7 +16,9 @@ def test_fingerprint_normalises_decimal_scale() -> None:
 
 
 def test_fingerprint_detects_a_different_amount() -> None:
-    assert fingerprint({"amount": Decimal("1490.50")}) != fingerprint({"amount": Decimal("1490.51")})
+    assert fingerprint({"amount": Decimal("1490.50")}) != fingerprint(
+        {"amount": Decimal("1490.51")}
+    )
 
 
 def test_fingerprint_keeps_list_order_significant() -> None:

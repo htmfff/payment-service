@@ -20,7 +20,9 @@ def test_exponential_backoff_doubles_until_the_cap() -> None:
 
 
 def test_exponential_backoff_never_exceeds_the_cap() -> None:
-    delay = exponential_backoff(10, base_seconds=2.0, multiplier=2.0, cap_seconds=30, jitter_ratio=0)
+    delay = exponential_backoff(
+        10, base_seconds=2.0, multiplier=2.0, cap_seconds=30, jitter_ratio=0
+    )
     assert delay == 30
 
 

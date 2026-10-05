@@ -15,7 +15,7 @@ from app.core.time import utcnow
 from app.db.models import Payment
 from app.db.repositories import OutboxRepository, PaymentRepository
 from app.db.session import transaction
-from app.logging import get_logger
+from app.logging_config import get_logger
 from app.messaging.events import PaymentCreatedEvent
 
 logger = get_logger(__name__)

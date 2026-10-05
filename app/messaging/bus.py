@@ -19,9 +19,13 @@ class EventPublisher(Protocol):
 
     async def publish_payment_created(self, event: PaymentCreatedEvent) -> None: ...
 
-    async def publish_retry(self, event: PaymentCreatedEvent, *, attempt: int, reason: str) -> None: ...
+    async def publish_retry(
+        self, event: PaymentCreatedEvent, *, attempt: int, reason: str
+    ) -> None: ...
 
-    async def publish_dead_letter(self, event: PaymentCreatedEvent, *, attempt: int, reason: str) -> None: ...
+    async def publish_dead_letter(
+        self, event: PaymentCreatedEvent, *, attempt: int, reason: str
+    ) -> None: ...
 
 
 def build_broker(url: str, *, app_id: str) -> RabbitBroker:
@@ -83,7 +87,9 @@ class RabbitEventPublisher:
             },
         )
 
-    async def publish_dead_letter(self, event: PaymentCreatedEvent, *, attempt: int, reason: str) -> None:
+    async def publish_dead_letter(
+        self, event: PaymentCreatedEvent, *, attempt: int, reason: str
+    ) -> None:
         await self._dead_letter.publish(
             event.to_message(),
             correlation_id=str(event.payment_id),

@@ -16,7 +16,7 @@ from app.core.hashing import canonical_json, sign_payload
 from app.core.retries import exponential_backoff
 from app.core.time import utcnow
 from app.db.models import Payment
-from app.logging import get_logger
+from app.logging_config import get_logger
 
 logger = get_logger(__name__)
 

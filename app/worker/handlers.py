@@ -11,7 +11,7 @@ from app.core.time import utcnow
 from app.db.models import Payment
 from app.db.repositories import PaymentRepository
 from app.db.session import Database, transaction
-from app.logging import get_logger
+from app.logging_config import get_logger
 from app.messaging.events import PaymentCreatedEvent
 from app.services.gateway import PaymentGateway
 from app.services.webhooks import WebhookDispatcher, webhook_payload_from_payment
@@ -70,11 +70,10 @@ class PaymentProcessor:
         await self._notify(settled)
 
     async def _claim(self, payment_id: UUID) -> Payment | None:
-        async with self._database.session() as session:
-            async with transaction(session):
-                repository = PaymentRepository(session)
-                await repository.increment_processing_attempts(payment_id)
-                return await repository.get(payment_id)
+        async with self._database.session() as session, transaction(session):
+            repository = PaymentRepository(session)
+            await repository.increment_processing_attempts(payment_id)
+            return await repository.get(payment_id)
 
     async def _reload(self, payment_id: UUID) -> Payment | None:
         async with self._database.session() as session:
@@ -108,15 +107,14 @@ class PaymentProcessor:
         )
 
     async def _settle(self, payment_id: UUID, outcome: ChargeOutcome) -> bool:
-        async with self._database.session() as session:
-            async with transaction(session):
-                return await PaymentRepository(session).mark_processed(
-                    payment_id,
-                    status=outcome.status,
-                    gateway_reference=outcome.gateway_reference,
-                    failure_reason=outcome.failure_reason,
-                    processed_at=outcome.processed_at,
-                )
+        async with self._database.session() as session, transaction(session):
+            return await PaymentRepository(session).mark_processed(
+                payment_id,
+                status=outcome.status,
+                gateway_reference=outcome.gateway_reference,
+                failure_reason=outcome.failure_reason,
+                processed_at=outcome.processed_at,
+            )
 
     async def _notify(self, payment: Payment) -> None:
         delivery = await self._webhooks.deliver(
@@ -134,19 +132,18 @@ class PaymentProcessor:
                 "error": delivery.last_error,
             },
         )
-        async with self._database.session() as session:
-            async with transaction(session):
-                await PaymentRepository(session).record_webhook_attempt(
-                    payment.id,
-                    attempts=delivery.attempts,
-                    last_error=delivery.last_error,
-                )
+        async with self._database.session() as session, transaction(session):
+            await PaymentRepository(session).record_webhook_attempt(
+                payment.id,
+                attempts=delivery.attempts,
+                last_error=delivery.last_error,
+            )
 
 
 def read_attempt(headers: dict[str, object] | None) -> int:
     """Current delivery attempt, taken from the message headers we set when scheduling a retry."""
     value = (headers or {}).get(constants.ATTEMPT_HEADER, constants.DEFAULT_ATTEMPT)
-    if not isinstance(value, (int, str)) or isinstance(value, bool):
+    if not isinstance(value, int | str) or isinstance(value, bool):
         return constants.DEFAULT_ATTEMPT
     try:
         return max(constants.DEFAULT_ATTEMPT, int(value))

@@ -10,7 +10,7 @@ from app.core.time import utcnow
 from app.db.models import OutboxEvent
 from app.db.repositories import OutboxRepository
 from app.db.session import Database, transaction
-from app.logging import get_logger
+from app.logging_config import get_logger
 from app.messaging.bus import EventPublisher
 from app.messaging.events import PaymentCreatedEvent
 
@@ -53,15 +53,14 @@ class OutboxRelay:
                 await self._sleep(self._settings.outbox_poll_interval_seconds)
 
     async def run_once(self) -> int:
-        async with self._database.session() as session:
-            async with transaction(session):
-                repository = OutboxRepository(session)
-                events = await repository.lock_publishable_batch(self._settings.outbox_batch_size)
-                published = 0
-                for event in events:
-                    if await self._dispatch(event, repository):
-                        published += 1
-                return published
+        async with self._database.session() as session, transaction(session):
+            repository = OutboxRepository(session)
+            events = await repository.lock_publishable_batch(self._settings.outbox_batch_size)
+            published = 0
+            for event in events:
+                if await self._dispatch(event, repository):
+                    published += 1
+            return published
 
     async def _dispatch(self, event: OutboxEvent, repository: OutboxRepository) -> bool:
         try:

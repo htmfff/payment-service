@@ -79,21 +79,20 @@ def _processor(
 
 
 async def _seed(database: Database, idempotency_key: str) -> Payment:
-    async with database.session() as session:
-        async with transaction(session):
-            payment = Payment(
-                idempotency_key=idempotency_key,
-                request_fingerprint="a" * 64,
-                amount=Decimal("1490.50"),
-                currency=Currency.RUB,
-                description="Processor test",
-                metadata_={"order_id": "A-1"},
-                webhook_url=_WEBHOOK_URL,
-                status=PaymentStatus.PENDING,
-            )
-            session.add(payment)
-            await session.flush()
-            return payment
+    async with database.session() as session, transaction(session):
+        payment = Payment(
+            idempotency_key=idempotency_key,
+            request_fingerprint="a" * 64,
+            amount=Decimal("1490.50"),
+            currency=Currency.RUB,
+            description="Processor test",
+            metadata_={"order_id": "A-1"},
+            webhook_url=_WEBHOOK_URL,
+            status=PaymentStatus.PENDING,
+        )
+        session.add(payment)
+        await session.flush()
+        return payment
 
 
 def _event(payment: Payment) -> PaymentCreatedEvent:

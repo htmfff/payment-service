@@ -9,7 +9,6 @@ from typing import Any
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
-    Enum as SqlEnum,
     ForeignKey,
     Index,
     Integer,
@@ -19,8 +18,11 @@ from sqlalchemy import (
     func,
     text,
 )
+from sqlalchemy import (
+    Enum as SqlEnum,
+)
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.dialects.postgresql import UUID as PgUUID
+from sqlalchemy.dialects.postgresql import UUID as PgUUID  # noqa: N811 - disambiguates uuid.UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.enums import Currency, OutboxStatus, PaymentStatus
@@ -28,7 +30,7 @@ from app.db.base import Base
 
 
 def _stored_values(enum_cls: type[Enum]) -> list[str]:
-    """Persist enum members by value so the database stores `pending`, not `PaymentStatus.PENDING`."""
+    """Persist enum members by value, so the database stores `pending` and not the member name."""
     return [str(member.value) for member in enum_cls]
 
 
@@ -55,11 +57,13 @@ OUTBOX_STATUS = SqlEnum(
 class Payment(Base):
     __tablename__ = "payments"
     __table_args__ = (
-        CheckConstraint("amount > 0", name="amount_positive"),
+        CheckConstraint("amount > 0", name="ck_payments_amount_positive"),
         Index("ix_payments_status_created_at", "status", "created_at"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        PgUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
 
@@ -127,7 +131,9 @@ class OutboxEvent(Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        PgUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     aggregate_type: Mapped[str] = mapped_column(
         String(64),
         nullable=False,
